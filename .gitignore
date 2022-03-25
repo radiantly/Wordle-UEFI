@@ -1,0 +1,5 @@
+# Wordlist header
+words.h
+
+# Generated efi stubs
+*.efi

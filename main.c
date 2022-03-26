@@ -71,14 +71,17 @@ int checkGuess(const char *buffer, const char *word_today) {
     return correct == 0x1f;
 }
 
+inline int positive_modulo(int a, int b) {
+    return (a % b + b) % b;
+}
+
 int main(int argc, char **argv) {
     ST->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
 
     struct tm *local_time = localtime(NULL);
     unsigned int seed = local_time->tm_year * 10000 + local_time->tm_mon * 100 + local_time->tm_mday;
     srand(seed);
-
-    const char *word_today = answers[rand() % answerCount];
+    const char *word_today = answers[positive_modulo(rand(), answerCount)];
 
     ST->ConOut->ClearScreen(ST->ConOut);
 

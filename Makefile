@@ -17,7 +17,7 @@ disk-image: all
 # and an EFI partition.
 # The EFI partition needs to contain a FAT32 filesystem (this is the most
 # supported EFI partition type).
-# The minimum size of a FAT partition is (sector size) 512 * 65527 = ~32MiB
+# The minimum size of a FAT32 fs is (sector size) 512 * (clusters) 65525 = ~32MiB
 # Here we create a disk file of 48MiB to account for that and extras
 # 1024 * 1024 * 48 / 512 = 98304
 	dd if=/dev/zero of=$(IMG_FILE) bs=512 count=$(IMG_DD_COUNT)
@@ -33,6 +33,7 @@ disk-image: all
 
 # Create a temporary image file that serves as our FAT32 partition
 	$(eval IMG_PART_FILE := $(shell mktemp XXXXXXXX.img))
+
 # Partition size = Total size - first sector + 1
 	dd if=/dev/zero of=$(IMG_PART_FILE) bs=512 count=$(IMG_PART_DD_COUNT)
 

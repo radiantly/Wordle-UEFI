@@ -12,6 +12,9 @@ jobs:
         with:
           submodules: true
 
+      - name: Install dependencies
+        run: sudo apt-get install lld mtools
+
       - run: make disk-image
 
       - name: Generate zip bundle

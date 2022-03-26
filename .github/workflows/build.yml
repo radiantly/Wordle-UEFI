@@ -1,0 +1,24 @@
+name: Build image
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - run: make disk-image
+
+      - name: Generate zip bundle
+        run: 7z a -tzip wordle-uefi.img.zip .\wordle-uefi.img
+
+      - name: Publish pre-release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          automatic_release_tag: "latest"
+          prerelease: true
+          files: wordle-uefi.img.zip

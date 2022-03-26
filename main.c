@@ -56,7 +56,7 @@ int checkGuess(const char *buffer, const char *word_today) {
 
     // Color each letter:
     for (int i = 0; i < 5; i++) {
-        int color = EFI_WHITE;
+        int color = EFI_LIGHTGRAY;
         if (correct & (1 << i)) {
             color = EFI_LIGHTGREEN;
         } else if (letters[buffer[i] - 'a']) {
@@ -72,9 +72,10 @@ int checkGuess(const char *buffer, const char *word_today) {
 }
 
 int main(int argc, char **argv) {
-    time_t curr_time = time(NULL);
-    struct tm *local_time = localtime(&curr_time);
-    unsigned int seed = local_time->tm_year * 1000 + local_time->tm_yday;
+    ST->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
+
+    struct tm *local_time = localtime(NULL);
+    unsigned int seed = local_time->tm_year * 10000 + local_time->tm_mon * 100 + local_time->tm_mday;
     srand(seed);
 
     const char *word_today = answers[rand() % answerCount];
@@ -82,9 +83,12 @@ int main(int argc, char **argv) {
     ST->ConOut->ClearScreen(ST->ConOut);
 
     ST->ConOut->SetAttribute(ST->ConOut, EFI_WHITE);
-    printf("%s", word_today);
     printf("Welcome to Wordle on UEFI!\n\n");
     ST->ConOut->SetAttribute(ST->ConOut, EFI_LIGHTGRAY);
+#ifdef DEBUG
+    printf("Seed: %d\n", seed);
+    printf("Word chosen: %s\n", word_today);
+#endif
     printf("Guess today's word:\n\n");
     ST->ConOut->SetAttribute(ST->ConOut, EFI_WHITE);
     printf("_____\n");
@@ -104,6 +108,8 @@ int main(int argc, char **argv) {
     int guess_idx = 0;
     const int guess_count = 6;
 
+    ST->ConOut->EnableCursor(ST->ConOut, 1);
+
     while (guess_idx < guess_count) {
         if (ST->ConIn->ReadKeyStroke(ST->ConIn, &Key) == EFI_SUCCESS) {
             int letter = 0;
@@ -115,7 +121,9 @@ int main(int argc, char **argv) {
                 printf("%c", letter - 32);
                 idx++;
             } else if (idx && (Key.ScanCode == SCAN_DELETE || Key.UnicodeChar == CHAR_BACKSPACE)) {
-                printf("\b");
+                ST->ConOut->SetCursorPosition(ST->ConOut, ST->ConOut->Mode->CursorColumn - 1, ST->ConOut->Mode->CursorRow);
+                printf("_");
+                ST->ConOut->SetCursorPosition(ST->ConOut, ST->ConOut->Mode->CursorColumn - 1, ST->ConOut->Mode->CursorRow);
                 idx--;
             } else if (idx == 5 && (Key.UnicodeChar == CHAR_CARRIAGE_RETURN || Key.UnicodeChar == CHAR_LINEFEED)) {
                 if (!isValid(buffer)) {
@@ -145,6 +153,10 @@ int main(int argc, char **argv) {
             printf("Uh oh! you didn't guess the word. The word was %s.\n", word_today);
         }
     }
+    ST->ConOut->SetAttribute(ST->ConOut, EFI_LIGHTGRAY);
+    printf("\nCome back tomorrow! Press any key to exit...\n");
+    while (ST->ConIn->ReadKeyStroke(ST->ConIn, &Key) != EFI_SUCCESS)
+        ;
 
     return 0;
 }
